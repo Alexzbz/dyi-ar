@@ -86,9 +86,10 @@
                 src="#mandala"
                 position="0 0.1 0"
                 rotation="-90 0 0"
-                scale="2 2 2"
-                material="transparent: true; opacity: 1; alphaTest: 0.5"
-                animation="property: rotation; to: -90 360 0; dur: 5000; easing: linear; loop: true">
+                scale="1.5 1.5 1.5"
+                material="transparent: true; opacity: 1; alphaTest: 0.5; shader: flat"
+                animation__rotate="property: rotation; to: -90 360 0; dur: 8000; easing: linear; loop: true"
+                animation__scale="property: scale; to: 1.8 1.8 1.8; dur: 2000; easing: easeInOutQuad; dir: alternate; loop: true">
             </a-image>
         </a-marker>
 
