@@ -88,11 +88,17 @@
         renderer="logarithmicDepthBuffer: true;"
         embedded
         loading-screen="enabled: false"
-        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+        arjs="sourceType: webcam; 
+              debugUIEnabled: false; 
+              trackingMethod: best; 
+              detectionMode: mono; 
+              maxDetectionRate: 60;
+              canvasWidth: 1000;
+              canvasHeight: 1000;">
 
         <a-nft
             type="nft"
-            url="./marker"
+            url="https://alexzbz.github.io/dyi-ar/marker"
             smooth="true"
             smoothCount="10"
             smoothTolerance=".01"
@@ -110,14 +116,14 @@
         </a-nft>
 
         <a-assets>
-            <img id="mandala" src="./mandala.png" crossorigin="anonymous" onerror="showError('图片加载失败: ' + this.src)">
+            <img id="mandala" src="https://alexzbz.github.io/dyi-ar/mandala.png" crossorigin="anonymous" onerror="showError('图片加载失败: ' + this.src)">
         </a-assets>
 
         <a-entity camera></a-entity>
     </a-scene>
 
     <div class="marker-preview">
-        <img src="marker.png" alt="扫描此图片">
+        <img src="https://alexzbz.github.io/dyi-ar/marker.png" alt="扫描此图片">
     </div>
 
     <script>
