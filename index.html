@@ -78,7 +78,7 @@
         loading-screen="enabled: false">
 
         <a-assets>
-            <img id="mandala" src="./mandala.png" crossorigin="anonymous">
+            <img id="mandala" src="https://alexzbz.github.io/dyi-ar/mandala.png" crossorigin="anonymous" onerror="showError('图片加载失败: ' + this.src)">
         </a-assets>
 
         <a-marker preset="hiro" smooth="true" smoothCount="5">
