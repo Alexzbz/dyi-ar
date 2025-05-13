@@ -99,37 +99,35 @@
         arjs="sourceType: webcam; 
               debugUIEnabled: true; 
               trackingMethod: best; 
-              detectionMode: mono_and_matrix; 
-              matrixCodeType: 3x3;
+              detectionMode: mono; 
               sourceWidth: 1280;
               sourceHeight: 720;
               displayWidth: 1280;
-              displayHeight: 720;">
+              displayHeight: 720;
+              maxDetectionRate: 30;
+              canvasWidth: 1280;
+              canvasHeight: 720;">
 
         <a-nft
             type="nft"
             url="./marker"
             smooth="true"
-            smoothCount="5"
+            smoothCount="10"
             smoothTolerance=".01"
-            smoothThreshold="5"
-            raycaster="objects: .clickable"
-            emitevents="true"
-            cursor="fuse: false; rayOrigin: mouse;">
+            smoothThreshold="5">
             
             <a-image
                 src="#mandala"
-                position="0 0 0"
+                position="0 0.5 0"
                 rotation="-90 0 0"
-                scale="1 1 1"
-                class="clickable"
+                scale="0.5 0.5 0.5"
                 material="transparent: true; opacity: 1; shader: flat"
                 animation="property: rotation; to: -90 360 0; dur: 8000; easing: linear; loop: true">
             </a-image>
             
         </a-nft>
 
-        <a-assets timeout="10000">
+        <a-assets timeout="30000">
             <img id="mandala" src="./mandala.png" crossorigin="anonymous">
         </a-assets>
 
@@ -137,7 +135,10 @@
     </a-scene>
 
     <div class="marker-preview">
-        <img src="./marker.png" alt="扫描此图片" style="width: 150px; height: 150px; border: 2px solid white;">
+        <img src="./marker.png" alt="扫描此图片" style="width: 200px; height: 200px; border: 2px solid white;">
+        <div style="color: white; text-align: center; margin-top: 5px; font-size: 12px;">
+            请对准此图片
+        </div>
     </div>
 
     <script>
@@ -163,6 +164,7 @@
                     '1. 网络连接是否正常<br>' +
                     '2. 是否允许了相机权限<br>' +
                     '3. 是否使用了最新版Chrome或Firefox<br>' +
+                    '4. 尝试清除浏览器缓存<br>' +
                     '<button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">刷新页面</button>';
             }
         }
@@ -208,12 +210,12 @@
             
             if (isSceneLoaded && isCameraReady && isImageLoaded) {
                 debugUI.innerHTML += '<br>✓ 所有内容加载完成<br>';
-                debugUI.innerHTML += '请将相机对准右下角的图片<br>';
-                debugUI.innerHTML += '提示：<br>';
-                debugUI.innerHTML += '1. 确保图片完整显示在画面中<br>';
-                debugUI.innerHTML += '2. 保持光线充足<br>';
-                debugUI.innerHTML += '3. 相机保持稳定<br>';
-                debugUI.innerHTML += '4. 尝试调整与图片的距离<br>';
+                debugUI.innerHTML += '识别提示：<br>';
+                debugUI.innerHTML += '1. 将整个图片显示在画面中<br>';
+                debugUI.innerHTML += '2. 保持手机稳定，避免晃动<br>';
+                debugUI.innerHTML += '3. 确保光线充足，避免反光<br>';
+                debugUI.innerHTML += '4. 尝试调整与图片的距离(20-40cm)<br>';
+                debugUI.innerHTML += '5. 调整手机角度，避免倾斜过大<br>';
             }
         }
 
@@ -240,12 +242,14 @@
             nft.addEventListener('markerFound', function() {
                 markerFound = true;
                 debugUI.innerHTML += '<br>✓ 图片已识别<br>';
+                debugUI.innerHTML += '提示：保持手机稳定以维持显示<br>';
                 loadingScreen.style.display = 'none';
             });
             
             nft.addEventListener('markerLost', function() {
                 markerFound = false;
                 debugUI.innerHTML = checkAllReady();
+                debugUI.innerHTML += '<br>✗ 图片丢失，请重新对准<br>';
             });
 
             loadAssets();
@@ -256,7 +260,8 @@
             video: { 
                 facingMode: 'environment',
                 width: { ideal: 1280 },
-                height: { ideal: 720 }
+                height: { ideal: 720 },
+                frameRate: { ideal: 30 }
             } 
         })
         .then(function(stream) {
