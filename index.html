@@ -94,33 +94,33 @@
         embedded
         loading-screen="enabled: false"
         arjs="sourceType: webcam; 
-              debugUIEnabled: false; 
+              debugUIEnabled: true; 
               trackingMethod: best; 
               detectionMode: mono; 
-              maxDetectionRate: 30;
-              canvasWidth: 640;
-              canvasHeight: 480;">
+              maxDetectionRate: 60;
+              canvasWidth: 800;
+              canvasHeight: 600;">
 
         <a-nft
             type="nft"
             url="./marker"
             smooth="true"
-            smoothCount="10"
-            smoothTolerance=".01"
-            smoothThreshold="5">
+            smoothCount="5"
+            smoothTolerance=".1"
+            smoothThreshold="2">
             
             <a-image
                 src="#mandala"
-                position="0 0.5 0"
+                position="0 0 0"
                 rotation="-90 0 0"
-                scale="0.5 0.5 0.5"
+                scale="1 1 1"
                 material="transparent: true; opacity: 1; alphaTest: 0.5; shader: flat"
                 animation="property: rotation; to: -90 360 0; dur: 8000; easing: linear; loop: true">
             </a-image>
             
         </a-nft>
 
-        <a-assets timeout="10000">
+        <a-assets timeout="30000">
             <img id="mandala" src="./mandala.png" crossorigin="anonymous">
         </a-assets>
 
@@ -128,7 +128,7 @@
     </a-scene>
 
     <div class="marker-preview">
-        <img src="./marker.png" alt="扫描此图片" onerror="this.onerror=null; this.src='marker.png';">
+        <img src="./marker.png" alt="扫描此图片" style="width: 150px; height: 150px;">
     </div>
 
     <script>
@@ -138,105 +138,97 @@
         let isSceneLoaded = false;
         let isCameraReady = false;
         let isImageLoaded = false;
+        let markerFound = false;
         
-        // 预加载图片
-        function preloadImage(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(url);
-                img.onerror = () => reject(new Error(`Failed to load ${url}`));
-                img.src = url;
-            });
-        }
-
         function showError(message) {
             errorMessage.style.display = 'block';
             errorMessage.innerHTML = message;
             debugUI.innerHTML += '<br>错误: ' + message;
-            // 显示重试按钮
             errorMessage.innerHTML += '<br><button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">点击重试</button>';
         }
 
         function checkAllReady() {
-            debugUI.innerHTML += '<br>检查状态：';
-            debugUI.innerHTML += '<br>- 场景加载: ' + (isSceneLoaded ? '是' : '否');
-            debugUI.innerHTML += '<br>- 相机就绪: ' + (isCameraReady ? '是' : '否');
-            debugUI.innerHTML += '<br>- 图片加载: ' + (isImageLoaded ? '是' : '否');
+            debugUI.innerHTML = '状态检查：<br>';
+            debugUI.innerHTML += '- 场景加载: ' + (isSceneLoaded ? '✓' : '✗') + '<br>';
+            debugUI.innerHTML += '- 相机就绪: ' + (isCameraReady ? '✓' : '✗') + '<br>';
+            debugUI.innerHTML += '- 图片加载: ' + (isImageLoaded ? '✓' : '✗') + '<br>';
+            debugUI.innerHTML += '- Marker识别: ' + (markerFound ? '✓' : '✗') + '<br>';
             
             if (isSceneLoaded && isCameraReady && isImageLoaded) {
-                debugUI.innerHTML += '<br>所有内容加载完成';
-                debugUI.innerHTML += '<br>请将相机对准图片';
+                debugUI.innerHTML += '<br>✓ 所有内容加载完成<br>';
+                debugUI.innerHTML += '请将相机对准右下角的图片<br>';
+                debugUI.innerHTML += '确保：<br>';
+                debugUI.innerHTML += '1. 图片完整显示在画面中<br>';
+                debugUI.innerHTML += '2. 光线充足<br>';
+                debugUI.innerHTML += '3. 相机稳定<br>';
             }
         }
 
         window.addEventListener('load', function() {
-            debugUI.innerHTML = '页面已加载';
+            debugUI.innerHTML = '页面加载中...';
 
-            // 检查HTTPS
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
                 showError('请使用HTTPS访问此页面');
                 return;
             }
 
-            // 检查是否支持getUserMedia
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
                 return;
             }
 
-            // 预加载所有图片
-            Promise.all([
-                preloadImage('./mandala.png'),
-                preloadImage('./marker.png')
-            ]).then(() => {
-                debugUI.innerHTML += '<br>所有图片预加载成功';
-                isImageLoaded = true;
-                checkAllReady();
-            }).catch(error => {
-                showError('图片加载失败: ' + error.message);
-            });
-
-            // 监听场景加载完成
             const scene = document.querySelector('a-scene');
             scene.addEventListener('loaded', function () {
-                debugUI.innerHTML += '<br>场景已加载';
                 isSceneLoaded = true;
                 checkAllReady();
             });
 
-            // 监听NFT marker事件
             const nft = document.querySelector('a-nft');
             nft.addEventListener('markerFound', function() {
-                debugUI.innerHTML += '<br>图片已识别';
+                markerFound = true;
+                debugUI.innerHTML += '<br>✓ 图片已识别<br>';
                 loadingScreen.style.display = 'none';
             });
             
             nft.addEventListener('markerLost', function() {
-                debugUI.innerHTML += '<br>图片已丢失';
+                markerFound = false;
+                debugUI.innerHTML += '<br>✗ 图片已丢失<br>';
+            });
+
+            document.getElementById('mandala').addEventListener('load', function() {
+                isImageLoaded = true;
+                checkAllReady();
+            });
+            
+            document.getElementById('mandala').addEventListener('error', function(e) {
+                showError('图片加载失败，请检查网络连接');
             });
         });
 
-        // 请求相机权限
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-            .then(function(stream) {
-                debugUI.innerHTML += '<br>相机权限已获取';
-                isCameraReady = true;
-                checkAllReady();
-            })
-            .catch(function(err) {
-                showError('无法访问相机，请确保已授予相机权限。错误: ' + err.message);
-            });
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        })
+        .then(function(stream) {
+            isCameraReady = true;
+            checkAllReady();
+        })
+        .catch(function(err) {
+            showError('无法访问相机: ' + err.message);
+        });
 
-        // 添加超时检查
         setTimeout(function() {
             if (!isSceneLoaded || !isCameraReady || !isImageLoaded) {
                 showError('加载超时，请检查：<br>' +
                     '1. 网络连接是否正常<br>' +
                     '2. 是否允许了相机权限<br>' +
                     '3. 是否使用了最新版Chrome或Firefox<br>' +
-                    '4. 图片文件是否存在');
+                    '4. 尝试刷新页面');
             }
-        }, 20000);
+        }, 30000);
     </script>
 </body>
 </html> 
