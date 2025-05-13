@@ -3,8 +3,8 @@
 <head>
     <title>WebAR Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.2.0/dist/aframe-master.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     
     <!-- 预加载图片 -->
     <link rel="preload" href="./mandala.png" as="image">
@@ -104,26 +104,36 @@
               sourceHeight: 720;
               displayWidth: 1280;
               displayHeight: 720;
-              maxDetectionRate: 30;
+              maxDetectionRate: 60;
               canvasWidth: 1280;
-              canvasHeight: 720;">
+              canvasHeight: 720;
+              patternRatio: 0.75;">
 
         <a-nft
             type="nft"
             url="./marker"
             smooth="true"
-            smoothCount="10"
+            smoothCount="5"
             smoothTolerance=".01"
-            smoothThreshold="5">
+            smoothThreshold="5"
+            raycaster="objects: .clickable"
+            emitevents="true">
             
-            <a-image
-                src="#mandala"
-                position="0 0.5 0"
-                rotation="-90 0 0"
-                scale="0.5 0.5 0.5"
-                material="transparent: true; opacity: 1; shader: flat"
-                animation="property: rotation; to: -90 360 0; dur: 8000; easing: linear; loop: true">
-            </a-image>
+            <a-entity
+                position="0 0 0"
+                scale="1 1 1"
+                class="clickable"
+                rotation="-90 0 0">
+                <a-image
+                    src="#mandala"
+                    width="1"
+                    height="1"
+                    rotation="0 0 0"
+                    position="0 0 0"
+                    material="transparent: true; opacity: 1; shader: flat"
+                    animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
+                </a-image>
+            </a-entity>
             
         </a-nft>
 
