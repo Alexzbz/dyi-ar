@@ -3,8 +3,8 @@
 <head>
     <title>WebAR Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.4.2/dist/aframe-master.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
     <style>
         body {
             margin: 0;
@@ -21,31 +21,126 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
         }
         .arjs-loader div {
             text-align: center;
             font-size: 1.25em;
             color: white;
+            margin: 10px;
+        }
+        #error-message {
+            color: red;
+            display: none;
+        }
+        .debug-ui {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body style="margin: 0px; overflow: hidden;">
-    <div class="arjs-loader">
+    <div class="arjs-loader" id="loading-screen">
         <div>正在加载AR内容，请稍候...</div>
+        <div id="error-message"></div>
+        <div style="color: #aaa; font-size: 0.8em;">
+            提示：<br>
+            1. 请确保允许相机权限<br>
+            2. 使用Chrome或Firefox浏览器<br>
+            3. 确保环境光线充足<br>
+            4. 将相机对准Hiro标记
+        </div>
+    </div>
+
+    <div class="debug-ui" id="debug-ui">
+        相机状态: 等待开启
     </div>
 
     <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
         renderer="logarithmicDepthBuffer: true;"
-        vr-mode-ui="enabled: false">
+        vr-mode-ui="enabled: false"
+        loading-screen="enabled: false">
 
-        <!-- 这是一个基本的AR标记示例 -->
-        <a-marker preset="hiro">
-            <a-box position="0 0.5 0" material="color: red;"></a-box>
+        <a-marker preset="hiro" smooth="true" smoothCount="5">
+            <a-box 
+                position="0 0.5 0" 
+                material="color: red;"
+                animation="property: rotation; to: 0 360 0; dur: 2000; easing: linear; loop: true">
+            </a-box>
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+        let debugUI = document.getElementById('debug-ui');
+        let loadingScreen = document.getElementById('loading-screen');
+        let isMarkerFound = false;
+        let isSceneLoaded = false;
+        let isCameraReady = false;
+        
+        function checkAllReady() {
+            if (isSceneLoaded && isCameraReady) {
+                setTimeout(function() {
+                    loadingScreen.style.display = 'none';
+                    debugUI.innerHTML += '<br>所有内容加载完成';
+                }, 1000);
+            }
+        }
+
+        window.addEventListener('load', function() {
+            debugUI.innerHTML = '页面已加载';
+
+            // 检查是否支持getUserMedia
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').innerHTML = '您的浏览器不支持AR功能，请使用最新版Chrome或Firefox';
+                debugUI.innerHTML += '<br>浏览器不支持AR';
+                return;
+            }
+
+            // 监听场景加载完成
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('loaded', function () {
+                debugUI.innerHTML += '<br>场景已加载';
+                isSceneLoaded = true;
+                checkAllReady();
+            });
+
+            // 监听marker被找到的事件
+            const marker = document.querySelector('a-marker');
+            marker.addEventListener('markerFound', function() {
+                debugUI.innerHTML += '<br>标记已找到';
+                isMarkerFound = true;
+            });
+            
+            marker.addEventListener('markerLost', function() {
+                debugUI.innerHTML += '<br>标记已丢失';
+                isMarkerFound = false;
+            });
+        });
+
+        // 请求相机权限
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                debugUI.innerHTML += '<br>相机权限已获取';
+                isCameraReady = true;
+                checkAllReady();
+            })
+            .catch(function(err) {
+                document.getElementById('error-message').style.display = 'block';
+                document.getElementById('error-message').innerHTML = '无法访问相机，请确保已授予相机权限';
+                debugUI.innerHTML += '<br>相机权限错误: ' + err.message;
+            });
+    </script>
 </body>
 </html> 
