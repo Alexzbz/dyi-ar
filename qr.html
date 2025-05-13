@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebAR QR码访问</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #qrcode {
+            margin: 20px 0;
+        }
+        .instructions {
+            margin-top: 20px;
+            color: #666;
+            max-width: 400px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>扫描二维码体验WebAR</h1>
+        <div id="qrcode"></div>
+        <div class="instructions">
+            <h3>使用说明：</h3>
+            <ol>
+                <li>使用手机相机扫描上方二维码</li>
+                <li>在手机浏览器中打开链接</li>
+                <li>允许相机权限</li>
+                <li>对准Hiro标记查看AR效果</li>
+            </ol>
+            <p>注意：请确保使用支持WebAR的现代浏览器（如Chrome或Firefox）</p>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            var qr = qrcode(0, 'M');
+            var url = window.location.href.replace('qr.html', 'index.html');
+            qr.addData(url);
+            qr.make();
+            document.getElementById('qrcode').innerHTML = qr.createImgTag(6);
+        };
+    </script>
+</body>
+</html> 
