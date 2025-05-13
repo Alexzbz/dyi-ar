@@ -3,8 +3,7 @@
 <head>
     <title>WebAR Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.4.2/dist/aframe-master.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@master/aframe/build/aframe-ar.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
     <style>
         body {
             margin: 0;
@@ -50,6 +49,20 @@
             max-width: 80%;
             word-wrap: break-word;
         }
+        .marker-preview {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .marker-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body style="margin: 0px; overflow: hidden;">
@@ -61,7 +74,7 @@
             1. 请确保允许相机权限<br>
             2. 使用Chrome或Firefox浏览器<br>
             3. 确保环境光线充足<br>
-            4. 将相机对准Hiro标记<br>
+            4. 将相机对准右下角的图片<br>
             5. 如果一直加载，请尝试刷新页面
         </div>
     </div>
@@ -71,35 +84,46 @@
     </div>
 
     <a-scene
-        embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false;"
         renderer="logarithmicDepthBuffer: true;"
-        vr-mode-ui="enabled: false"
-        loading-screen="enabled: false">
+        embedded
+        loading-screen="enabled: false"
+        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
 
-        <a-assets>
-            <img id="mandala" src="https://alexzbz.github.io/dyi-ar/mandala.png" crossorigin="anonymous" onerror="showError('图片加载失败: ' + this.src)">
-        </a-assets>
-
-        <a-marker preset="hiro" smooth="true" smoothCount="5">
+        <a-nft
+            type="nft"
+            url="./marker"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance=".01"
+            smoothThreshold="5">
+            
             <a-image
                 src="#mandala"
-                position="0 0.1 0"
+                position="0 0.5 0"
                 rotation="-90 0 0"
-                scale="1.5 1.5 1.5"
+                scale="0.5 0.5 0.5"
                 material="transparent: true; opacity: 1; alphaTest: 0.5; shader: flat"
                 animation="property: rotation; to: -90 360 0; dur: 8000; easing: linear; loop: true">
             </a-image>
-        </a-marker>
+            
+        </a-nft>
+
+        <a-assets>
+            <img id="mandala" src="./mandala.png" crossorigin="anonymous" onerror="showError('图片加载失败: ' + this.src)">
+        </a-assets>
 
         <a-entity camera></a-entity>
     </a-scene>
+
+    <div class="marker-preview">
+        <img src="marker.png" alt="扫描此图片">
+    </div>
 
     <script>
         let debugUI = document.getElementById('debug-ui');
         let loadingScreen = document.getElementById('loading-screen');
         let errorMessage = document.getElementById('error-message');
-        let isMarkerFound = false;
         let isSceneLoaded = false;
         let isCameraReady = false;
         
@@ -112,7 +136,7 @@
         function checkAllReady() {
             if (isSceneLoaded && isCameraReady) {
                 debugUI.innerHTML += '<br>所有内容加载完成';
-                debugUI.innerHTML += '<br>请将相机对准Hiro标记';
+                debugUI.innerHTML += '<br>请将相机对准图片';
             }
         }
 
@@ -139,17 +163,15 @@
                 checkAllReady();
             });
 
-            // 监听marker被找到的事件
-            const marker = document.querySelector('a-marker');
-            marker.addEventListener('markerFound', function() {
-                debugUI.innerHTML += '<br>标记已找到';
-                isMarkerFound = true;
+            // 监听NFT marker事件
+            const nft = document.querySelector('a-nft');
+            nft.addEventListener('markerFound', function() {
+                debugUI.innerHTML += '<br>图片已识别';
                 loadingScreen.style.display = 'none';
             });
             
-            marker.addEventListener('markerLost', function() {
-                debugUI.innerHTML += '<br>标记已丢失';
-                isMarkerFound = false;
+            nft.addEventListener('markerLost', function() {
+                debugUI.innerHTML += '<br>图片已丢失';
             });
         });
 
