@@ -149,55 +149,53 @@
         let isImageLoaded = false;
         let markerFound = false;
         let retryCount = 0;
-        const MAX_RETRIES = 3;
+        const maxRetries = 3;
         
         function showError(message) {
-            errorMessage.style.display = 'block';
-            errorMessage.innerHTML = message;
-            debugUI.innerHTML += '<br>错误: ' + message;
-            if (retryCount < MAX_RETRIES) {
-                errorMessage.innerHTML += '<br><button onclick="retryLoading()" style="margin-top: 10px; padding: 5px 10px;">点击重试</button>';
+            if (retryCount < maxRetries) {
+                retryCount++;
+                errorMessage.style.display = 'block';
+                errorMessage.innerHTML = `错误 (尝试 ${retryCount}/${maxRetries}): ${message}`;
+                debugUI.innerHTML += '<br>错误: ' + message;
+                errorMessage.innerHTML += '<br><button onclick="retryLoading()" style="margin-top: 10px; padding: 5px 10px;">重试加载</button>';
             } else {
-                errorMessage.innerHTML += '<br><button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">刷新页面</button>';
+                errorMessage.innerHTML = '多次加载失败，请检查：<br>' +
+                    '1. 网络连接是否正常<br>' +
+                    '2. 是否允许了相机权限<br>' +
+                    '3. 是否使用了最新版Chrome或Firefox<br>' +
+                    '<button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">刷新页面</button>';
             }
         }
 
         function retryLoading() {
-            retryCount++;
             errorMessage.style.display = 'none';
-            debugUI.innerHTML = '正在重试 (' + retryCount + '/' + MAX_RETRIES + ')...';
-            
-            // 重新加载图片
-            const mandalaImg = document.getElementById('mandala');
-            mandalaImg.src = './mandala.png?' + new Date().getTime();
-            
-            // 重新初始化状态
-            isSceneLoaded = false;
-            isCameraReady = false;
-            isImageLoaded = false;
-            markerFound = false;
-            
-            // 重新检查相机
-            initCamera();
-            
-            // 重新检查场景
-            checkAllReady();
+            debugUI.innerHTML = '重新加载中...<br>';
+            loadAssets();
         }
 
-        function initCamera() {
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
-            })
-            .then(function(stream) {
-                isCameraReady = true;
+        function loadAssets() {
+            // 预加载所有资源
+            Promise.all([
+                fetch('./marker.fset').then(response => response.ok ? response : Promise.reject('marker.fset 加载失败')),
+                fetch('./marker.fset3').then(response => response.ok ? response : Promise.reject('marker.fset3 加载失败')),
+                fetch('./marker.iset').then(response => response.ok ? response : Promise.reject('marker.iset 加载失败')),
+                new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve();
+                    img.onerror = () => reject('mandala.png 加载失败');
+                    img.src = './mandala.png';
+                }),
+                new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve();
+                    img.onerror = () => reject('marker.png 加载失败');
+                    img.src = './marker.png';
+                })
+            ]).then(() => {
+                isImageLoaded = true;
                 checkAllReady();
-            })
-            .catch(function(err) {
-                showError('无法访问相机: ' + err.message);
+            }).catch(error => {
+                showError('资源加载失败: ' + error);
             });
         }
 
@@ -205,22 +203,22 @@
             debugUI.innerHTML = '状态检查：<br>';
             debugUI.innerHTML += '- 场景加载: ' + (isSceneLoaded ? '✓' : '✗') + '<br>';
             debugUI.innerHTML += '- 相机就绪: ' + (isCameraReady ? '✓' : '✗') + '<br>';
-            debugUI.innerHTML += '- 图片加载: ' + (isImageLoaded ? '✓' : '✗') + '<br>';
+            debugUI.innerHTML += '- 资源加载: ' + (isImageLoaded ? '✓' : '✗') + '<br>';
             debugUI.innerHTML += '- Marker识别: ' + (markerFound ? '✓' : '✗') + '<br>';
             
             if (isSceneLoaded && isCameraReady && isImageLoaded) {
                 debugUI.innerHTML += '<br>✓ 所有内容加载完成<br>';
                 debugUI.innerHTML += '请将相机对准右下角的图片<br>';
-                debugUI.innerHTML += '确保：<br>';
-                debugUI.innerHTML += '1. 图片完整显示在画面中<br>';
-                debugUI.innerHTML += '2. 光线充足<br>';
-                debugUI.innerHTML += '3. 相机稳定<br>';
-                debugUI.innerHTML += '4. 距离适中（建议20-30厘米）<br>';
+                debugUI.innerHTML += '提示：<br>';
+                debugUI.innerHTML += '1. 确保图片完整显示在画面中<br>';
+                debugUI.innerHTML += '2. 保持光线充足<br>';
+                debugUI.innerHTML += '3. 相机保持稳定<br>';
+                debugUI.innerHTML += '4. 尝试调整与图片的距离<br>';
             }
         }
 
         window.addEventListener('load', function() {
-            debugUI.innerHTML = '页面加载中...';
+            debugUI.innerHTML = '页面加载中...<br>';
 
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
                 showError('请使用HTTPS访问此页面');
@@ -232,14 +230,12 @@
                 return;
             }
 
-            // 初始化场景
             const scene = document.querySelector('a-scene');
             scene.addEventListener('loaded', function () {
                 isSceneLoaded = true;
                 checkAllReady();
             });
 
-            // 监听NFT marker事件
             const nft = document.querySelector('a-nft');
             nft.addEventListener('markerFound', function() {
                 markerFound = true;
@@ -249,34 +245,40 @@
             
             nft.addEventListener('markerLost', function() {
                 markerFound = false;
-                debugUI.innerHTML = '✗ 图片已丢失<br>请保持相机稳定';
+                debugUI.innerHTML = checkAllReady();
             });
 
-            // 监听图片加载
-            const mandalaImg = document.getElementById('mandala');
-            mandalaImg.addEventListener('load', function() {
-                isImageLoaded = true;
-                checkAllReady();
-            });
-            
-            mandalaImg.addEventListener('error', function(e) {
-                showError('图片加载失败，请检查网络连接');
-            });
+            loadAssets();
+        });
 
-            // 初始化相机
-            initCamera();
+        // 请求相机权限
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        })
+        .then(function(stream) {
+            isCameraReady = true;
+            checkAllReady();
+        })
+        .catch(function(err) {
+            showError('无法访问相机: ' + err.message);
         });
 
         // 添加超时检查
-        setTimeout(function() {
+        let timeoutId = setTimeout(function checkTimeout() {
             if (!isSceneLoaded || !isCameraReady || !isImageLoaded) {
-                showError('加载超时，请检查：<br>' +
-                    '1. 网络连接是否正常<br>' +
-                    '2. 是否允许了相机权限<br>' +
-                    '3. 是否使用了最新版Chrome或Firefox<br>' +
-                    '4. 尝试刷新页面');
+                if (retryCount < maxRetries) {
+                    showError('加载超时，正在重试...');
+                    retryLoading();
+                    timeoutId = setTimeout(checkTimeout, 10000);
+                } else {
+                    showError('多次加载失败，请刷新页面重试');
+                }
             }
-        }, 15000);
+        }, 10000);
     </script>
 </body>
 </html> 
