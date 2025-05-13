@@ -32,6 +32,10 @@
         #error-message {
             color: red;
             display: none;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px;
         }
         .debug-ui {
             position: fixed;
@@ -43,6 +47,8 @@
             font-family: monospace;
             font-size: 12px;
             z-index: 1000;
+            max-width: 80%;
+            word-wrap: break-word;
         }
     </style>
 </head>
@@ -55,12 +61,13 @@
             1. 请确保允许相机权限<br>
             2. 使用Chrome或Firefox浏览器<br>
             3. 确保环境光线充足<br>
-            4. 将相机对准Hiro标记
+            4. 将相机对准Hiro标记<br>
+            5. 如果一直加载，请尝试刷新页面
         </div>
     </div>
 
     <div class="debug-ui" id="debug-ui">
-        相机状态: 等待开启
+        初始化中...
     </div>
 
     <a-scene
@@ -84,27 +91,36 @@
     <script>
         let debugUI = document.getElementById('debug-ui');
         let loadingScreen = document.getElementById('loading-screen');
+        let errorMessage = document.getElementById('error-message');
         let isMarkerFound = false;
         let isSceneLoaded = false;
         let isCameraReady = false;
         
+        function showError(message) {
+            errorMessage.style.display = 'block';
+            errorMessage.innerHTML = message;
+            debugUI.innerHTML += '<br>错误: ' + message;
+        }
+
         function checkAllReady() {
             if (isSceneLoaded && isCameraReady) {
-                setTimeout(function() {
-                    loadingScreen.style.display = 'none';
-                    debugUI.innerHTML += '<br>所有内容加载完成';
-                }, 1000);
+                debugUI.innerHTML += '<br>所有内容加载完成';
+                debugUI.innerHTML += '<br>请将相机对准Hiro标记';
             }
         }
 
         window.addEventListener('load', function() {
             debugUI.innerHTML = '页面已加载';
 
+            // 检查HTTPS
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                showError('请使用HTTPS访问此页面');
+                return;
+            }
+
             // 检查是否支持getUserMedia
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').innerHTML = '您的浏览器不支持AR功能，请使用最新版Chrome或Firefox';
-                debugUI.innerHTML += '<br>浏览器不支持AR';
+                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
                 return;
             }
 
@@ -121,6 +137,7 @@
             marker.addEventListener('markerFound', function() {
                 debugUI.innerHTML += '<br>标记已找到';
                 isMarkerFound = true;
+                loadingScreen.style.display = 'none';
             });
             
             marker.addEventListener('markerLost', function() {
@@ -137,10 +154,15 @@
                 checkAllReady();
             })
             .catch(function(err) {
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').innerHTML = '无法访问相机，请确保已授予相机权限';
-                debugUI.innerHTML += '<br>相机权限错误: ' + err.message;
+                showError('无法访问相机，请确保已授予相机权限。错误: ' + err.message);
             });
+
+        // 添加超时检查
+        setTimeout(function() {
+            if (!isSceneLoaded || !isCameraReady) {
+                showError('加载超时，请刷新页面重试');
+            }
+        }, 10000);
     </script>
 </body>
 </html> 
