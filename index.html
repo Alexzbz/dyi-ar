@@ -3,8 +3,9 @@
 <head>
     <title>WebAR Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.2.0/dist/aframe-master.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image.prod.js"></script>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
     <!-- 预加载图片 -->
     <link rel="preload" href="./mandala.png" as="image">
@@ -17,24 +18,19 @@
             margin: 0;
             overflow: hidden;
         }
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
-            position: absolute;
+        .loading-screen {
+            position: fixed;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             background-color: rgba(0, 0, 0, 0.8);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-        }
-        .arjs-loader div {
-            text-align: center;
-            font-size: 1.25em;
             color: white;
-            margin: 10px;
         }
         #error-message {
             color: red;
@@ -67,17 +63,30 @@
             z-index: 1000;
         }
         .marker-preview img {
-            width: 100px;
-            height: 100px;
+            width: 200px;
+            height: 200px;
             object-fit: contain;
+            border: 2px solid white;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
         }
     </style>
 </head>
-<body style="margin: 0px; overflow: hidden;">
-    <div class="arjs-loader" id="loading-screen">
-        <div>正在加载AR内容，请稍候...</div>
+<body>
+    <div class="loading-screen" id="loading-screen">
+        <div style="font-size: 1.25em; margin: 10px;">正在加载AR内容，请稍候...</div>
         <div id="error-message"></div>
-        <div style="color: #aaa; font-size: 0.8em;">
+        <div style="color: #aaa; font-size: 0.8em; margin: 10px;">
             提示：<br>
             1. 请确保允许相机权限<br>
             2. 使用Chrome或Firefox浏览器<br>
@@ -87,139 +96,70 @@
         </div>
     </div>
 
-    <div class="debug-ui" id="debug-ui">
-        初始化中...
-    </div>
+    <div class="debug-ui" id="debug-ui">初始化中...</div>
 
     <a-scene
-        vr-mode-ui="enabled: false;"
-        renderer="logarithmicDepthBuffer: true; antialias: true; precision: mediump;"
+        mindar-image="imageTargetSrc: ./targets.mind; showStats: true; uiScanning: true; uiLoading: false;"
         embedded
-        loading-screen="enabled: false"
-        arjs="sourceType: webcam; 
-              debugUIEnabled: true; 
-              trackingMethod: best; 
-              detectionMode: mono; 
-              sourceWidth: 1280;
-              sourceHeight: 720;
-              displayWidth: 1280;
-              displayHeight: 720;
-              maxDetectionRate: 60;
-              canvasWidth: 1280;
-              canvasHeight: 720;
-              patternRatio: 0.75;">
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights: true"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false">
 
-        <a-nft
-            type="nft"
-            url="./marker"
-            smooth="true"
-            smoothCount="5"
-            smoothTolerance=".01"
-            smoothThreshold="5"
-            raycaster="objects: .clickable"
-            emitevents="true">
-            
-            <a-entity
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <a-image
+                src="#mandala"
                 position="0 0 0"
-                scale="1 1 1"
-                class="clickable"
-                rotation="-90 0 0">
-                <a-image
-                    src="#mandala"
-                    width="1"
-                    height="1"
-                    rotation="0 0 0"
-                    position="0 0 0"
-                    material="transparent: true; opacity: 1; shader: flat"
-                    animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
-                </a-image>
-            </a-entity>
-            
-        </a-nft>
+                height="1"
+                width="1"
+                rotation="0 0 0"
+                material="transparent: true; opacity: 1;"
+                animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
+            </a-image>
+        </a-entity>
 
-        <a-assets timeout="30000">
+        <a-assets>
             <img id="mandala" src="./mandala.png" crossorigin="anonymous">
         </a-assets>
-
-        <a-entity camera></a-entity>
     </a-scene>
 
     <div class="marker-preview">
-        <img src="./marker.png" alt="扫描此图片" style="width: 200px; height: 200px; border: 2px solid white;">
+        <img src="./marker.png" alt="扫描此图片">
         <div style="color: white; text-align: center; margin-top: 5px; font-size: 12px;">
             请对准此图片
         </div>
     </div>
 
     <script>
-        let debugUI = document.getElementById('debug-ui');
-        let loadingScreen = document.getElementById('loading-screen');
-        let errorMessage = document.getElementById('error-message');
+        const debugUI = document.getElementById('debug-ui');
+        const loadingScreen = document.getElementById('loading-screen');
+        const errorMessage = document.getElementById('error-message');
         let isSceneLoaded = false;
         let isCameraReady = false;
-        let isImageLoaded = false;
-        let markerFound = false;
-        let retryCount = 0;
-        const maxRetries = 3;
-        
+        let isTargetFound = false;
+
+        function updateDebugInfo(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugUI.innerHTML += `<br>[${timestamp}] ${message}`;
+        }
+
         function showError(message) {
-            if (retryCount < maxRetries) {
-                retryCount++;
-                errorMessage.style.display = 'block';
-                errorMessage.innerHTML = `错误 (尝试 ${retryCount}/${maxRetries}): ${message}`;
-                debugUI.innerHTML += '<br>错误: ' + message;
-                errorMessage.innerHTML += '<br><button onclick="retryLoading()" style="margin-top: 10px; padding: 5px 10px;">重试加载</button>';
-            } else {
-                errorMessage.innerHTML = '多次加载失败，请检查：<br>' +
-                    '1. 网络连接是否正常<br>' +
-                    '2. 是否允许了相机权限<br>' +
-                    '3. 是否使用了最新版Chrome或Firefox<br>' +
-                    '4. 尝试清除浏览器缓存<br>' +
-                    '<button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px;">刷新页面</button>';
-            }
+            errorMessage.style.display = 'block';
+            errorMessage.innerHTML = message;
+            updateDebugInfo('错误: ' + message);
+            errorMessage.innerHTML += '<br><button onclick="location.reload()">重试</button>';
         }
 
-        function retryLoading() {
-            errorMessage.style.display = 'none';
-            debugUI.innerHTML = '重新加载中...<br>';
-            loadAssets();
-        }
-
-        function loadAssets() {
-            // 预加载所有资源
-            Promise.all([
-                fetch('./marker.fset').then(response => response.ok ? response : Promise.reject('marker.fset 加载失败')),
-                fetch('./marker.fset3').then(response => response.ok ? response : Promise.reject('marker.fset3 加载失败')),
-                fetch('./marker.iset').then(response => response.ok ? response : Promise.reject('marker.iset 加载失败')),
-                new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => resolve();
-                    img.onerror = () => reject('mandala.png 加载失败');
-                    img.src = './mandala.png';
-                }),
-                new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => resolve();
-                    img.onerror = () => reject('marker.png 加载失败');
-                    img.src = './marker.png';
-                })
-            ]).then(() => {
-                isImageLoaded = true;
-                checkAllReady();
-            }).catch(error => {
-                showError('资源加载失败: ' + error);
-            });
-        }
-
-        function checkAllReady() {
+        function updateStatus() {
             debugUI.innerHTML = '状态检查：<br>';
             debugUI.innerHTML += '- 场景加载: ' + (isSceneLoaded ? '✓' : '✗') + '<br>';
             debugUI.innerHTML += '- 相机就绪: ' + (isCameraReady ? '✓' : '✗') + '<br>';
-            debugUI.innerHTML += '- 资源加载: ' + (isImageLoaded ? '✓' : '✗') + '<br>';
-            debugUI.innerHTML += '- Marker识别: ' + (markerFound ? '✓' : '✗') + '<br>';
-            
-            if (isSceneLoaded && isCameraReady && isImageLoaded) {
-                debugUI.innerHTML += '<br>✓ 所有内容加载完成<br>';
+            debugUI.innerHTML += '- 目标识别: ' + (isTargetFound ? '✓' : '✗') + '<br>';
+
+            if (isSceneLoaded && isCameraReady) {
+                debugUI.innerHTML += '<br>✓ 系统就绪<br>';
                 debugUI.innerHTML += '识别提示：<br>';
                 debugUI.innerHTML += '1. 将整个图片显示在画面中<br>';
                 debugUI.innerHTML += '2. 保持手机稳定，避免晃动<br>';
@@ -229,71 +169,58 @@
             }
         }
 
-        window.addEventListener('load', function() {
-            debugUI.innerHTML = '页面加载中...<br>';
-
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                showError('请使用HTTPS访问此页面');
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
-                return;
-            }
-
-            const scene = document.querySelector('a-scene');
-            scene.addEventListener('loaded', function () {
-                isSceneLoaded = true;
-                checkAllReady();
-            });
-
-            const nft = document.querySelector('a-nft');
-            nft.addEventListener('markerFound', function() {
-                markerFound = true;
-                debugUI.innerHTML += '<br>✓ 图片已识别<br>';
-                debugUI.innerHTML += '提示：保持手机稳定以维持显示<br>';
-                loadingScreen.style.display = 'none';
-            });
-            
-            nft.addEventListener('markerLost', function() {
-                markerFound = false;
-                debugUI.innerHTML = checkAllReady();
-                debugUI.innerHTML += '<br>✗ 图片丢失，请重新对准<br>';
-            });
-
-            loadAssets();
+        const sceneEl = document.querySelector('a-scene');
+        
+        // 监听场景加载
+        sceneEl.addEventListener('loaded', () => {
+            isSceneLoaded = true;
+            updateDebugInfo('场景加载完成');
+            updateStatus();
         });
 
-        // 请求相机权限
+        // 监听目标检测
+        sceneEl.addEventListener('targetFound', () => {
+            isTargetFound = true;
+            updateDebugInfo('目标已识别');
+            loadingScreen.style.display = 'none';
+            updateStatus();
+        });
+
+        sceneEl.addEventListener('targetLost', () => {
+            isTargetFound = false;
+            updateDebugInfo('目标丢失');
+            updateStatus();
+        });
+
+        // 监听相机状态
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: 'environment',
                 width: { ideal: 1280 },
-                height: { ideal: 720 },
-                frameRate: { ideal: 30 }
+                height: { ideal: 720 }
             } 
         })
-        .then(function(stream) {
+        .then(stream => {
             isCameraReady = true;
-            checkAllReady();
+            updateDebugInfo('相机已就绪');
+            updateStatus();
         })
-        .catch(function(err) {
+        .catch(err => {
             showError('无法访问相机: ' + err.message);
         });
 
-        // 添加超时检查
-        let timeoutId = setTimeout(function checkTimeout() {
-            if (!isSceneLoaded || !isCameraReady || !isImageLoaded) {
-                if (retryCount < maxRetries) {
-                    showError('加载超时，正在重试...');
-                    retryLoading();
-                    timeoutId = setTimeout(checkTimeout, 10000);
-                } else {
-                    showError('多次加载失败，请刷新页面重试');
-                }
+        // 错误处理
+        sceneEl.addEventListener('arError', (ev) => {
+            showError('AR错误: ' + ev.detail.error);
+        });
+
+        window.addEventListener('load', () => {
+            updateDebugInfo('页面加载完成');
+            
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                showError('请使用HTTPS访问此页面');
             }
-        }, 10000);
+        });
     </script>
 </body>
 </html> 
