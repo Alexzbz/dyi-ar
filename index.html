@@ -109,6 +109,7 @@
             4. 将相机对准右下角的图片<br>
             5. 如果一直加载，请尝试刷新页面
         </div>
+        <button onclick="startAR()" id="start-button" style="display: none;">开始AR体验</button>
     </div>
 
     <div class="debug-ui" id="debug-ui">初始化中...</div>
@@ -117,25 +118,15 @@
         <a-scene
             mindar-image="imageTargetSrc: ./targets.mind; 
                          showStats: true; 
-                         uiScanning: #scanning-overlay;
-                         uiLoading: false;
-                         maxTrack: 1;
-                         warmupTolerance: 5;
-                         missTolerance: 5;"
+                         uiScanning: true;
+                         uiLoading: true;"
             embedded
             renderer="antialias: true; 
-                     colorManagement: true; 
-                     physicallyCorrectLights: true;
-                     precision: mediump;"
-            color-space="sRGB"
+                     colorManagement: true;"
             vr-mode-ui="enabled: false"
             device-orientation-permission-ui="enabled: false">
 
-            <a-assets>
-                <img id="mandala" src="./mandala.png" crossorigin="anonymous">
-            </a-assets>
-
-            <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
             <a-entity mindar-image-target="targetIndex: 0">
                 <a-image
@@ -149,6 +140,9 @@
                 </a-image>
             </a-entity>
 
+            <a-assets>
+                <img id="mandala" src="./mandala.png" crossorigin="anonymous">
+            </a-assets>
         </a-scene>
     </div>
 
@@ -163,6 +157,7 @@
         const debugUI = document.getElementById('debug-ui');
         const loadingScreen = document.getElementById('loading-screen');
         const errorMessage = document.getElementById('error-message');
+        const startButton = document.getElementById('start-button');
         let isSceneLoaded = false;
         let isCameraReady = false;
         let isTargetFound = false;
@@ -170,13 +165,14 @@
         function updateDebugInfo(message) {
             const timestamp = new Date().toLocaleTimeString();
             debugUI.innerHTML += `<br>[${timestamp}] ${message}`;
+            console.log(`[${timestamp}] ${message}`);
         }
 
         function showError(message) {
             errorMessage.style.display = 'block';
             errorMessage.innerHTML = message;
             updateDebugInfo('错误: ' + message);
-            errorMessage.innerHTML += '<br><button onclick="location.reload()">重试</button>';
+            startButton.style.display = 'block';
         }
 
         function updateStatus() {
@@ -196,27 +192,40 @@
             }
         }
 
+        async function startAR() {
+            try {
+                updateDebugInfo('正在检查相机权限...');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' }, 
+                    audio: false 
+                });
+                stream.getTracks().forEach(track => track.stop());
+                
+                updateDebugInfo('相机权限已获取');
+                const sceneEl = document.querySelector('a-scene');
+                const system = sceneEl.systems["mindar-image-system"];
+                
+                updateDebugInfo('正在启动AR系统...');
+                await system.start();
+                updateDebugInfo('AR系统启动成功');
+                
+                isCameraReady = true;
+                updateStatus();
+                loadingScreen.style.display = 'none';
+            } catch (error) {
+                showError('启动失败: ' + error.message);
+            }
+        }
+
         const sceneEl = document.querySelector('a-scene');
-        const system = sceneEl.systems["mindar-image-system"];
         
-        // 监听场景加载
         sceneEl.addEventListener('loaded', () => {
             isSceneLoaded = true;
             updateDebugInfo('场景加载完成');
             updateStatus();
-
-            // 启动AR系统
-            system.start().then(() => {
-                updateDebugInfo('AR系统启动成功');
-                isCameraReady = true;
-                updateStatus();
-                loadingScreen.style.display = 'none';
-            }).catch(err => {
-                showError('AR系统启动失败: ' + err);
-            });
+            startButton.style.display = 'block';
         });
 
-        // 监听目标检测
         sceneEl.addEventListener('targetFound', () => {
             isTargetFound = true;
             updateDebugInfo('目标已识别');
@@ -229,7 +238,6 @@
             updateStatus();
         });
 
-        // 错误处理
         sceneEl.addEventListener('arError', (ev) => {
             showError('AR错误: ' + ev.detail.error);
         });
@@ -245,13 +253,6 @@
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
                 return;
-            }
-        });
-
-        // 停止AR系统
-        window.addEventListener('beforeunload', () => {
-            if (system) {
-                system.stop();
             }
         });
     </script>
