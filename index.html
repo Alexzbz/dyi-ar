@@ -7,12 +7,14 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
-    <!-- 预加载图片 -->
-    <link rel="preload" href="./mandala.png" as="image">
+    <link rel="preload" href="./1.png" as="image">
+    <link rel="preload" href="./2.png" as="image">
+    <link rel="preload" href="./3.png" as="image">
+    <link rel="preload" href="./4.png" as="image">
+    <link rel="preload" href="./5.png" as="image">
+    <link rel="preload" href="./6.png" as="image">
     <link rel="preload" href="./marker.png" as="image">
-    <link rel="preload" href="./marker.fset" as="fetch" crossorigin="anonymous">
-    <link rel="preload" href="./marker.fset3" as="fetch" crossorigin="anonymous">
-    <link rel="preload" href="./marker.iset" as="fetch" crossorigin="anonymous">
+    
     <style>
         body {
             margin: 0;
@@ -20,68 +22,6 @@
             width: 100vw;
             height: 100vh;
             position: relative;
-        }
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: white;
-        }
-        #error-message {
-            color: red;
-            display: none;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px;
-        }
-        .debug-ui {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            color: white;
-            background: rgba(0,0,0,0.6);
-            padding: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 1000;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-        .marker-preview {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 1000;
-        }
-        .marker-preview img {
-            width: 200px;
-            height: 200px;
-            object-fit: contain;
-            border: 2px solid white;
-        }
-        button {
-            margin: 5px;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            background: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #45a049;
         }
         #ar-container {
             width: 100%;
@@ -95,24 +35,22 @@
             height: 100% !important;
             object-fit: cover;
         }
+        .scan-hint {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: white;
+            background: rgba(0,0,0,0.8);
+            padding: 15px 30px;
+            border-radius: 25px;
+            text-align: center;
+            transition: opacity 0.5s;
+        }
     </style>
 </head>
 <body>
-    <div class="loading-screen" id="loading-screen">
-        <div style="font-size: 1.25em; margin: 10px;">正在加载AR内容，请稍候...</div>
-        <div id="error-message"></div>
-        <div style="color: #aaa; font-size: 0.8em; margin: 10px;">
-            提示：<br>
-            1. 请确保允许相机权限<br>
-            2. 使用Chrome或Firefox浏览器<br>
-            3. 确保环境光线充足<br>
-            4. 将相机对准右下角的图片<br>
-            5. 如果一直加载，请尝试刷新页面
-        </div>
-    </div>
-
-    <div class="debug-ui" id="debug-ui">初始化中...</div>
-
     <div id="ar-container">
         <a-scene
             mindar-image="imageTargetSrc: ./targets.mind;"
@@ -138,8 +76,8 @@
                 <a-image
                     src="#img1"
                     position="0 0 0.3"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 0"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 360; dur: 5000; easing: linear; loop: true">
@@ -148,8 +86,8 @@
                 <a-image
                     src="#img2"
                     position="0 0 0.2"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 60"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 -360; dur: 6000; easing: linear; loop: true">
@@ -158,8 +96,8 @@
                 <a-image
                     src="#img3"
                     position="0 0 0.1"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 120"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 360; dur: 7000; easing: linear; loop: true">
@@ -168,8 +106,8 @@
                 <a-image
                     src="#img4"
                     position="0 0 0"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 180"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 -360; dur: 8000; easing: linear; loop: true">
@@ -178,8 +116,8 @@
                 <a-image
                     src="#img5"
                     position="0 0 -0.1"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 240"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 360; dur: 9000; easing: linear; loop: true">
@@ -188,8 +126,8 @@
                 <a-image
                     src="#img6"
                     position="0 0 -0.2"
-                    height="0.9"
-                    width="1.6"
+                    height="1.8"
+                    width="3.2"
                     rotation="0 0 300"
                     material="transparent: true; opacity: 1; alphaTest: 0.5;"
                     animation="property: rotation; to: 0 0 -360; dur: 10000; easing: linear; loop: true">
@@ -198,118 +136,32 @@
                 <a-plane
                     position="0 0 -0.3"
                     rotation="0 0 0"
-                    width="1"
-                    height="1.5"
+                    width="3.2"
+                    height="1.8"
                     color="black">
                 </a-plane>
             </a-entity>
         </a-scene>
     </div>
 
-    <div class="marker-preview">
-        <img src="./marker.png" alt="扫描此图片">
-        <div style="color: white; text-align: center; margin-top: 5px; font-size: 12px;">
-            请对准此图片
-        </div>
-    </div>
+    <div class="scan-hint" id="scan-hint">请对准识别图片</div>
 
     <script>
-        const debugUI = document.getElementById('debug-ui');
-        const loadingScreen = document.getElementById('loading-screen');
-        const errorMessage = document.getElementById('error-message');
-        let isSceneLoaded = false;
-        let isCameraReady = false;
-        let isTargetFound = false;
-
-        function updateDebugInfo(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            debugUI.innerHTML += `<br>[${timestamp}] ${message}`;
-            console.log(`[${timestamp}] ${message}`);
-        }
-
-        function showError(message) {
-            errorMessage.style.display = 'block';
-            errorMessage.innerHTML = message;
-            updateDebugInfo('错误: ' + message);
-        }
-
-        function updateStatus() {
-            debugUI.innerHTML = '状态检查：<br>';
-            debugUI.innerHTML += '- 场景加载: ' + (isSceneLoaded ? '✓' : '✗') + '<br>';
-            debugUI.innerHTML += '- 相机就绪: ' + (isCameraReady ? '✓' : '✗') + '<br>';
-            debugUI.innerHTML += '- 目标识别: ' + (isTargetFound ? '✓' : '✗') + '<br>';
-
-            if (isSceneLoaded && isCameraReady) {
-                debugUI.innerHTML += '<br>✓ 系统就绪<br>';
-                debugUI.innerHTML += '识别提示：<br>';
-                debugUI.innerHTML += '1. 将整个图片显示在画面中<br>';
-                debugUI.innerHTML += '2. 保持手机稳定，避免晃动<br>';
-                debugUI.innerHTML += '3. 确保光线充足，避免反光<br>';
-                debugUI.innerHTML += '4. 尝试调整与图片的距离(20-40cm)<br>';
-                debugUI.innerHTML += '5. 调整手机角度，避免倾斜过大<br>';
-            }
-        }
-
         const sceneEl = document.querySelector('a-scene');
+        const scanHint = document.getElementById('scan-hint');
         
-        // 初始化AR系统
-        window.addEventListener('load', async () => {
-            updateDebugInfo('页面加载完成');
-            
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                showError('请使用HTTPS访问此页面');
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
-                return;
-            }
-
-            try {
-                updateDebugInfo('正在请求相机权限...');
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }, 
-                    audio: false 
-                });
-                
-                updateDebugInfo('相机权限已获取');
-                isCameraReady = true;
-                updateStatus();
-
-                const system = sceneEl.systems["mindar-image-system"];
-                await system.start();
-                updateDebugInfo('AR系统启动成功');
-                loadingScreen.style.display = 'none';
-            } catch (error) {
-                showError('启动失败: ' + error.message);
-            }
-        });
-
-        sceneEl.addEventListener('loaded', () => {
-            isSceneLoaded = true;
-            updateDebugInfo('场景加载完成');
-            updateStatus();
-        });
-
         sceneEl.addEventListener('targetFound', () => {
-            isTargetFound = true;
-            updateDebugInfo('目标已识别');
-            updateStatus();
+            scanHint.style.opacity = '0';
+            setTimeout(() => {
+                scanHint.style.display = 'none';
+            }, 500);
         });
 
         sceneEl.addEventListener('targetLost', () => {
-            isTargetFound = false;
-            updateDebugInfo('目标丢失');
-            updateStatus();
-        });
-
-        sceneEl.addEventListener('arError', (ev) => {
-            showError('AR错误: ' + ev.detail.error);
+            scanHint.style.display = 'block';
+            setTimeout(() => {
+                scanHint.style.opacity = '1';
+            }, 0);
         });
     </script>
 </body>
