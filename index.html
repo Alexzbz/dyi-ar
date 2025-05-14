@@ -17,6 +17,9 @@
         body {
             margin: 0;
             overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
         }
         .loading-screen {
             position: fixed;
@@ -80,6 +83,13 @@
         button:hover {
             background: #45a049;
         }
+        #ar-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
     </style>
 </head>
 <body>
@@ -98,32 +108,44 @@
 
     <div class="debug-ui" id="debug-ui">初始化中...</div>
 
-    <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; showStats: true; uiScanning: true; uiLoading: false;"
-        embedded
-        color-space="sRGB"
-        renderer="colorManagement: true, physicallyCorrectLights: true"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false">
+    <div id="ar-container">
+        <a-scene
+            mindar-image="imageTargetSrc: ./targets.mind; 
+                         showStats: true; 
+                         uiScanning: true; 
+                         uiLoading: false;
+                         maxTrack: 1;
+                         warmupTolerance: 5;
+                         missTolerance: 5;"
+            embedded
+            renderer="antialias: true; 
+                     colorManagement: true; 
+                     physicallyCorrectLights: true;
+                     precision: mediump;"
+            color-space="sRGB"
+            vr-mode-ui="enabled: false"
+            device-orientation-permission-ui="enabled: false">
 
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            <a-assets>
+                <img id="mandala" src="./mandala.png" crossorigin="anonymous">
+            </a-assets>
 
-        <a-entity mindar-image-target="targetIndex: 0">
-            <a-image
-                src="#mandala"
-                position="0 0 0"
-                height="1"
-                width="1"
-                rotation="0 0 0"
-                material="transparent: true; opacity: 1;"
-                animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
-            </a-image>
-        </a-entity>
+            <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
 
-        <a-assets>
-            <img id="mandala" src="./mandala.png" crossorigin="anonymous">
-        </a-assets>
-    </a-scene>
+            <a-entity mindar-image-target="targetIndex: 0">
+                <a-image
+                    src="#mandala"
+                    position="0 0 0"
+                    height="1"
+                    width="1"
+                    rotation="0 0 0"
+                    material="transparent: true; opacity: 1;"
+                    animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
+                </a-image>
+            </a-entity>
+
+        </a-scene>
+    </div>
 
     <div class="marker-preview">
         <img src="./marker.png" alt="扫描此图片">
@@ -198,7 +220,8 @@
                 facingMode: 'environment',
                 width: { ideal: 1280 },
                 height: { ideal: 720 }
-            } 
+            },
+            audio: false
         })
         .then(stream => {
             isCameraReady = true;
