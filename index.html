@@ -109,22 +109,22 @@
             4. 将相机对准右下角的图片<br>
             5. 如果一直加载，请尝试刷新页面
         </div>
-        <button onclick="startAR()" id="start-button" style="display: none;">开始AR体验</button>
     </div>
 
     <div class="debug-ui" id="debug-ui">初始化中...</div>
 
     <div id="ar-container">
         <a-scene
-            mindar-image="imageTargetSrc: ./targets.mind; 
-                         showStats: true; 
-                         uiScanning: true;
-                         uiLoading: true;"
+            mindar-image="imageTargetSrc: ./targets.mind;"
             embedded
-            renderer="antialias: true; 
-                     colorManagement: true;"
-            vr-mode-ui="enabled: false"
-            device-orientation-permission-ui="enabled: false">
+            renderer="antialias: true;"
+            loading-screen="enabled: false"
+            stats="false"
+            vr-mode-ui="enabled: false">
+
+            <a-assets>
+                <img id="mandala" src="./mandala.png" crossorigin="anonymous">
+            </a-assets>
 
             <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
@@ -139,10 +139,6 @@
                     animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
                 </a-image>
             </a-entity>
-
-            <a-assets>
-                <img id="mandala" src="./mandala.png" crossorigin="anonymous">
-            </a-assets>
         </a-scene>
     </div>
 
@@ -157,7 +153,6 @@
         const debugUI = document.getElementById('debug-ui');
         const loadingScreen = document.getElementById('loading-screen');
         const errorMessage = document.getElementById('error-message');
-        const startButton = document.getElementById('start-button');
         let isSceneLoaded = false;
         let isCameraReady = false;
         let isTargetFound = false;
@@ -172,7 +167,6 @@
             errorMessage.style.display = 'block';
             errorMessage.innerHTML = message;
             updateDebugInfo('错误: ' + message);
-            startButton.style.display = 'block';
         }
 
         function updateStatus() {
@@ -192,38 +186,50 @@
             }
         }
 
-        async function startAR() {
+        const sceneEl = document.querySelector('a-scene');
+        
+        // 初始化AR系统
+        window.addEventListener('load', async () => {
+            updateDebugInfo('页面加载完成');
+            
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                showError('请使用HTTPS访问此页面');
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
+                return;
+            }
+
             try {
-                updateDebugInfo('正在检查相机权限...');
+                updateDebugInfo('正在请求相机权限...');
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' }, 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }, 
                     audio: false 
                 });
-                stream.getTracks().forEach(track => track.stop());
                 
                 updateDebugInfo('相机权限已获取');
-                const sceneEl = document.querySelector('a-scene');
-                const system = sceneEl.systems["mindar-image-system"];
-                
-                updateDebugInfo('正在启动AR系统...');
-                await system.start();
-                updateDebugInfo('AR系统启动成功');
-                
                 isCameraReady = true;
                 updateStatus();
+
+                const system = sceneEl.systems["mindar-image-system"];
+                await system.start();
+                updateDebugInfo('AR系统启动成功');
                 loadingScreen.style.display = 'none';
             } catch (error) {
                 showError('启动失败: ' + error.message);
             }
-        }
+        });
 
-        const sceneEl = document.querySelector('a-scene');
-        
         sceneEl.addEventListener('loaded', () => {
             isSceneLoaded = true;
             updateDebugInfo('场景加载完成');
             updateStatus();
-            startButton.style.display = 'block';
         });
 
         sceneEl.addEventListener('targetFound', () => {
@@ -240,20 +246,6 @@
 
         sceneEl.addEventListener('arError', (ev) => {
             showError('AR错误: ' + ev.detail.error);
-        });
-
-        window.addEventListener('load', () => {
-            updateDebugInfo('页面加载完成');
-            
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                showError('请使用HTTPS访问此页面');
-                return;
-            }
-
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
-                return;
-            }
         });
     </script>
 </body>
