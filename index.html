@@ -90,6 +90,11 @@
             top: 0;
             left: 0;
         }
+        #ar-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
@@ -112,7 +117,7 @@
         <a-scene
             mindar-image="imageTargetSrc: ./targets.mind; 
                          showStats: true; 
-                         uiScanning: true; 
+                         uiScanning: #scanning-overlay;
                          uiLoading: false;
                          maxTrack: 1;
                          warmupTolerance: 5;
@@ -192,19 +197,29 @@
         }
 
         const sceneEl = document.querySelector('a-scene');
+        const system = sceneEl.systems["mindar-image-system"];
         
         // 监听场景加载
         sceneEl.addEventListener('loaded', () => {
             isSceneLoaded = true;
             updateDebugInfo('场景加载完成');
             updateStatus();
+
+            // 启动AR系统
+            system.start().then(() => {
+                updateDebugInfo('AR系统启动成功');
+                isCameraReady = true;
+                updateStatus();
+                loadingScreen.style.display = 'none';
+            }).catch(err => {
+                showError('AR系统启动失败: ' + err);
+            });
         });
 
         // 监听目标检测
         sceneEl.addEventListener('targetFound', () => {
             isTargetFound = true;
             updateDebugInfo('目标已识别');
-            loadingScreen.style.display = 'none';
             updateStatus();
         });
 
@@ -212,24 +227,6 @@
             isTargetFound = false;
             updateDebugInfo('目标丢失');
             updateStatus();
-        });
-
-        // 监听相机状态
-        navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: 'environment',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            },
-            audio: false
-        })
-        .then(stream => {
-            isCameraReady = true;
-            updateDebugInfo('相机已就绪');
-            updateStatus();
-        })
-        .catch(err => {
-            showError('无法访问相机: ' + err.message);
         });
 
         // 错误处理
@@ -242,6 +239,19 @@
             
             if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
                 showError('请使用HTTPS访问此页面');
+                return;
+            }
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showError('您的浏览器不支持AR功能，请使用最新版Chrome或Firefox');
+                return;
+            }
+        });
+
+        // 停止AR系统
+        window.addEventListener('beforeunload', () => {
+            if (system) {
+                system.stop();
             }
         });
     </script>
